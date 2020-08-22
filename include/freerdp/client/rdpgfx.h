@@ -24,6 +24,7 @@
 
 #include <freerdp/channels/rdpgfx.h>
 #include <freerdp/utils/profiler.h>
+#include <freerdp/extension/RDPGFXAudit.h>
 
 /**
  * Client Interface
@@ -148,6 +149,18 @@ struct _rdpgfx_client_context
 
 	CRITICAL_SECTION mux;
 	PROFILER_DEFINE(SurfaceProfiler)
+
+	/**
+	 * Sora: Extend features (GFX-AVC444 only).
+	 * These features can cause performance problems, so turn them on only for testing purposes.
+	*/
+
+	/* Highlight the updated rectangle area */
+	BOOL highlightUpdatedRectArea;
+	/* Print FPS to console */
+	BOOL showFpsOnConsole;
+	BOOL showFpsOnScreen;
+	GFXAuditContext *audit;	
 };
 
 FREERDP_API RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings);

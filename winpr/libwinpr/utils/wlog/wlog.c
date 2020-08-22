@@ -57,7 +57,7 @@ typedef struct _wLogFilter wLogFilter;
  * http://docs.python.org/2/library/logging.html
  */
 
-LPCSTR WLOG_LEVELS[7] = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF" };
+LPCSTR WLOG_LEVELS[7] = { "Trace", "Debug", "Info", "Warn", "Error", "Fatal", "Off" };
 
 static INIT_ONCE _WLogInitialized = INIT_ONCE_STATIC_INIT;
 static DWORD g_FilterCount = 0;

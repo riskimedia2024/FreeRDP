@@ -20,6 +20,7 @@
  * limitations under the License.
  */
 
+#define _GNU_SOURCE
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -34,6 +35,8 @@
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"
 #include "../cliprdr_common.h"
+
+#include <pthread.h>
 
 #ifdef WITH_DEBUG_CLIPRDR
 static const char* const CB_MSG_TYPE_STRINGS[] = { "",
@@ -917,6 +920,8 @@ static DWORD WINAPI cliprdr_virtual_channel_client_thread(LPVOID arg)
 	wMessage message;
 	cliprdrPlugin* cliprdr = (cliprdrPlugin*)arg;
 	UINT error = CHANNEL_RC_OK;
+
+	pthread_setname_np(pthread_self(), "Cliprdr VCH");
 
 	while (1)
 	{

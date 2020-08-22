@@ -22,6 +22,7 @@
  * limitations under the License.
  */
 
+#define _GNU_SOURCE
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -247,6 +248,7 @@ void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt
 	}
 
 #endif
+
 	XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, x, y, w, h, x, y);
 }
 
@@ -417,6 +419,9 @@ static BOOL xf_hw_end_paint(rdpContext* context)
 
 	if (!xfc->remote_app)
 	{
+		//XCopyArea(xfc->display, xfc->primary, xfc->window->handle, xfc->gc, 0, 0,
+		//	context->gdi->width, context->gdi->height, 0, 0);
+		
 		if (!xfc->complex_regions)
 		{
 			if (xfc->hdc->hwnd->invalid->null)
@@ -458,6 +463,7 @@ static BOOL xf_hw_end_paint(rdpContext* context)
 	}
 	else
 	{
+		/* Sora: I haven't learned about RemoteApp, so I can't modify it */
 		if (xfc->hdc->hwnd->invalid->null)
 			return TRUE;
 
@@ -1412,6 +1418,8 @@ static DWORD WINAPI xf_input_thread(LPVOID arg)
 	events[nCount++] = xfc->x11event;
 	events[nCount++] = instance->context->abortEvent;
 
+	pthread_setname_np(pthread_self(), "RdpInput");
+
 	while (running)
 	{
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
@@ -1519,6 +1527,7 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 	rdpSettings* settings;
 	TimerEventArgs timerEvent;
 	EventArgsInit(&timerEvent, "xfreerdp");
+	pthread_setname_np(pthread_self(), "RdpClient");
 	instance = (freerdp*)param;
 	context = instance->context;
 	status = freerdp_connect(instance);

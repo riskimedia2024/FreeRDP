@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Optimized YUV/RGB conversion operations using openCL
+ * Optimized YUV/RGB conversion operations using OpenCL
  *
  * Copyright 2019 David Fort <contact@hardening-consulting.com>
  * Copyright 2019 Rangee Gmbh
@@ -24,9 +24,12 @@
 
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #include "prim_internal.h"
 
-#if defined(WITH_OPENCL)
+#ifdef WITH_OPENCL
 #ifdef __APPLE__
 #include "OpenCL/opencl.h"
 #else
@@ -48,6 +51,7 @@ typedef struct
 
 static primitives_opencl_context* primitives_get_opencl_context(void);
 
+/* Sora: Fixed: OpenCL crashes on clEnqueueReadBuffer because of memory overrange */
 static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[3],
                                  const UINT32 srcStep[3], BYTE* pDst, UINT32 dstStep,
                                  const prim_size_t* roi)
@@ -60,11 +64,13 @@ static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[
 	size_t indexes[2];
 	const char* sourceNames[] = { "Y", "U", "V" };
 	primitives_opencl_context* cl = primitives_get_opencl_context();
+	size_t siz = roi->height * roi->width * 4;
+	int dstObjStride = roi->width * 4;
 
 	kernel = clCreateKernel(cl->program, kernelName, &ret);
 	if (ret != CL_SUCCESS)
 	{
-		WLog_ERR(TAG, "openCL: unable to create kernel %s", kernelName);
+		WLog_ERR(TAG, "OpenCL: unable to create kernel %s", kernelName);
 		return -1;
 	}
 
@@ -79,7 +85,7 @@ static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[
 		}
 	}
 
-	destObj = clCreateBuffer(cl->context, CL_MEM_WRITE_ONLY, dstStep * roi->height, NULL, &ret);
+	destObj = clCreateBuffer(cl->context, CL_MEM_WRITE_ONLY, siz, NULL, &ret);
 	if (ret != CL_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to create dest obj");
@@ -111,7 +117,7 @@ static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[
 		goto error_set_args;
 	}
 
-	ret = clSetKernelArg(kernel, 7, sizeof(cl_int), &dstStep);
+	ret = clSetKernelArg(kernel, 7, sizeof(cl_int), &dstObjStride);
 	if (ret != CL_SUCCESS)
 	{
 		WLog_ERR(TAG, "unable to set arg dstStep");
@@ -128,11 +134,16 @@ static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[
 	}
 
 	/* Transfer result to host */
-	ret = clEnqueueReadBuffer(cl->commandQueue, destObj, CL_TRUE, 0, roi->height * dstStep, pDst, 0,
-	                          NULL, NULL);
+	static const size_t originBuffer[3] = { 0, 0, 0 };
+	static const size_t originHost[3] = { 0, 0, 0 };
+	const size_t region[3] = { dstObjStride, roi->height, 1 };
+	//ret = clEnqueueReadBuffer(cl->commandQueue, destObj, CL_TRUE, 0, roi->height * dstStep, pDst, 0,
+	//                          NULL, NULL);
+	ret = clEnqueueReadBufferRect(cl->commandQueue, destObj, CL_TRUE, originBuffer, originHost, region,
+		dstObjStride, 0, dstStep, 0, pDst, 0, NULL, NULL);
 	if (ret != CL_SUCCESS)
 	{
-		WLog_ERR(TAG, "unable to read back buffer");
+		WLog_ERR(TAG, "unable to read back buffer (%d)", ret);
 		goto error_set_args;
 	}
 
@@ -177,9 +188,27 @@ static pstatus_t primitives_uninit_opencl(void)
 	return PRIMITIVES_SUCCESS;
 }
 
-static const char* openclProgram =
-#include "primitives.cl"
-    ;
+static char *load_opencl_program(char const *file)
+{
+	int fd = open(file, O_RDONLY);
+	if (fd < 0)
+		return NULL;
+	
+	struct stat stbuf;
+	fstat(fd, &stbuf);
+	char *ptr = (char *) malloc(stbuf.st_size + 1);
+	memset(ptr, '\0', stbuf.st_size + 1);
+	
+	if (read(fd, ptr, stbuf.st_size) < 0)
+	{
+		close(fd);
+		free(ptr);
+		return NULL;
+	}
+
+	close(fd);
+	return ptr;
+}
 
 static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 {
@@ -225,7 +254,7 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 		ret = clGetDeviceInfo(device_id, CL_DEVICE_NAME, sizeof(deviceName), deviceName, NULL);
 		if (ret != CL_SUCCESS)
 		{
-			WLog_ERR(TAG, "openCL: unable get device name for platform %s", platformName);
+			WLog_ERR(TAG, "OpenCL: unable get device name for platform %s", platformName);
 			clReleaseDevice(device_id);
 			continue;
 		}
@@ -233,22 +262,23 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 		context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
 		if (ret != CL_SUCCESS)
 		{
-			WLog_ERR(TAG, "openCL: unable to create context for platform %s, device %s",
+			WLog_ERR(TAG, "OpenCL: unable to create context for platform %s, device %s",
 			         platformName, deviceName);
 			clReleaseDevice(device_id);
 			continue;
 		}
 
-		cl->commandQueue = clCreateCommandQueue(context, device_id, 0, &ret);
+		// cl->commandQueue = clCreateCommandQueue(context, device_id, 0, &ret);
+		cl->commandQueue = clCreateCommandQueueWithProperties(context, device_id, NULL, &ret);
 		if (ret != CL_SUCCESS)
 		{
-			WLog_ERR(TAG, "openCL: unable to create command queue");
+			WLog_ERR(TAG, "OpenCL: unable to create command queue");
 			clReleaseContext(context);
 			clReleaseDevice(device_id);
 			continue;
 		}
 
-		WLog_INFO(TAG, "openCL: using platform=%s device=%s", platformName, deviceName);
+		WLog_INFO(TAG, "OpenCL: Using \"%s\" on \"%s\"", deviceName, platformName);
 
 		cl->platformId = platform_ids[i];
 		cl->deviceId = device_id;
@@ -260,16 +290,18 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 
 	if (!gotGPU)
 	{
-		WLog_ERR(TAG, "openCL: no GPU found");
+		WLog_ERR(TAG, "OpenCL: no GPU found");
 		return FALSE;
 	}
+
+	char *openclProgram = load_opencl_program("/home/sora/Repositories/Hacking/FreeRDP/libfreerdp/primitives/primitives.cl");
 
 	programLen = strlen(openclProgram);
 	cl->program =
 	    clCreateProgramWithSource(cl->context, 1, (const char**)&openclProgram, &programLen, &ret);
 	if (ret != CL_SUCCESS)
 	{
-		WLog_ERR(TAG, "openCL: unable to create program");
+		WLog_ERR(TAG, "OpenCL: unable to create program");
 		goto out_program_create;
 	}
 
@@ -277,26 +309,19 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 	if (ret != CL_SUCCESS)
 	{
 		size_t length;
-		char buffer[2048];
-		ret = clGetProgramBuildInfo(cl->program, cl->deviceId, CL_PROGRAM_BUILD_LOG, sizeof(buffer),
-		                            buffer, &length);
-		if (ret != CL_SUCCESS)
-		{
-			WLog_ERR(TAG,
-			         "openCL: building program failed but unable to retrieve buildLog, error=%d",
-			         ret);
-		}
-		else
-		{
-			WLog_ERR(TAG, "openCL: unable to build program, errorLog=%s", buffer);
-		}
+		clGetProgramBuildInfo(cl->program, cl->deviceId, CL_PROGRAM_BUILD_LOG, 0, NULL, &length);
+
+		char *buffer = malloc(length);
+		clGetProgramBuildInfo(cl->program, cl->deviceId, CL_PROGRAM_BUILD_LOG, length, buffer, NULL);
+		WLog_ERR(TAG, "OpenCL: unable to build program, errorLog=%s", buffer);
+		free(buffer);
 		goto out_program_build;
 	}
 
 	kernel = clCreateKernel(cl->program, "yuv420_to_bgra_1b", &ret);
 	if (ret != CL_SUCCESS)
 	{
-		WLog_ERR(TAG, "openCL: unable to create yuv420_to_bgra_1b kernel");
+		WLog_ERR(TAG, "OpenCL: unable to create yuv420_to_bgra_1b kernel");
 		goto out_program_build;
 	}
 	clReleaseKernel(kernel);

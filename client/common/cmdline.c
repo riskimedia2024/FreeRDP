@@ -2521,6 +2521,26 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					return rc;
 			}
 		}
+#ifdef WITH_GFX_H264
+		CommandLineSwitchCase(arg, "gfx-updated-fragment")
+		{
+			settings->GfxFeatures.highlightUpdatedArea = enable;
+			if (enable)
+				settings->SupportGraphicsPipeline = TRUE;
+		}
+		CommandLineSwitchCase(arg, "gfx-show-fps-console")
+		{
+			settings->GfxFeatures.showFpsOnConsole = enable;
+			if (enable)
+				settings->SupportGraphicsPipeline = TRUE;
+		}
+		CommandLineSwitchCase(arg, "gfx-show-fps-screen")
+		{
+			settings->GfxFeatures.showFpsOnScreen = enable;
+			if (enable)
+				settings->SupportGraphicsPipeline = TRUE;
+		}
+#endif /* WITH_GFX_H264 */
 		CommandLineSwitchCase(arg, "gfx-thin-client")
 		{
 			settings->GfxThinClient = enable;
@@ -2545,56 +2565,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (enable)
 				settings->SupportGraphicsPipeline = TRUE;
 		}
-#ifdef WITH_GFX_H264
-		CommandLineSwitchCase(arg, "gfx-h264")
-		{
-			settings->SupportGraphicsPipeline = TRUE;
-			settings->GfxH264 = TRUE;
-
-			if (arg->Value)
-			{
-				int rc = CHANNEL_RC_OK;
-				char** p;
-				size_t count, x;
-
-				p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
-				if (!p || (count == 0))
-					rc = COMMAND_LINE_ERROR;
-				else
-				{
-					for (x = 0; x < count; x++)
-					{
-						const char* val = p[x];
-
-						if (_strnicmp("AVC444", val, 7) == 0)
-						{
-							settings->GfxH264 = TRUE;
-							settings->GfxAVC444 = TRUE;
-						}
-						else if (_strnicmp("AVC420", val, 7) == 0)
-						{
-							settings->GfxH264 = TRUE;
-							settings->GfxAVC444 = FALSE;
-						}
-						else if (_strnicmp("mask:", val, 5) == 0)
-						{
-							ULONGLONG v;
-							const char* uv = &val[5];
-							if (!value_to_uint(uv, &v, 0, UINT32_MAX))
-								rc = COMMAND_LINE_ERROR;
-							else
-								settings->GfxCapsFilter = (UINT32)v;
-						}
-						else
-							rc = COMMAND_LINE_ERROR;
-					}
-				}
-				free(p);
-				if (rc != CHANNEL_RC_OK)
-					return rc;
-			}
-		}
-#endif
 		CommandLineSwitchCase(arg, "rfx")
 		{
 			settings->RemoteFxCodec = enable;

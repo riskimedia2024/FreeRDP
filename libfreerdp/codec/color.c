@@ -33,13 +33,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/primitives.h>
 
-#if defined(CAIRO_FOUND)
-#include <cairo.h>
-#endif
-
-#if defined(SWSCALE_FOUND)
-#include <libswscale/swscale.h>
-#endif
+#include <cairo/cairo.h>
 
 #define TAG FREERDP_TAG("color")
 
@@ -748,39 +742,14 @@ BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32
 	return TRUE;
 }
 
-#if defined(SWSCALE_FOUND)
-static int av_format_for_buffer(UINT32 format)
-{
-	switch (format)
-	{
-		case PIXEL_FORMAT_ARGB32:
-			return AV_PIX_FMT_BGRA;
-
-		case PIXEL_FORMAT_XRGB32:
-			return AV_PIX_FMT_BGR0;
-
-		case PIXEL_FORMAT_BGRA32:
-			return AV_PIX_FMT_RGBA;
-
-		case PIXEL_FORMAT_BGRX32:
-			return AV_PIX_FMT_RGB0;
-
-		default:
-			return AV_PIX_FMT_NONE;
-	}
-}
-#endif
-
 BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst,
                          UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight, const BYTE* pSrcData,
                          DWORD SrcFormat, UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
                          UINT32 nSrcWidth, UINT32 nSrcHeight)
 {
 	BOOL rc = FALSE;
-#if defined(SWSCALE_FOUND) || defined(CAIRO_FOUND)
 	const BYTE* src = &pSrcData[nXSrc * GetBytesPerPixel(SrcFormat) + nYSrc * nSrcStep];
 	BYTE* dst = &pDstData[nXDst * GetBytesPerPixel(DstFormat) + nYDst * nDstStep];
-#endif
 
 	/* direct copy is much faster than scaling, so check if we can simply copy... */
 	if ((nDstWidth == nSrcWidth) && (nDstHeight == nSrcHeight))
@@ -790,31 +759,6 @@ BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT3
 		                          FREERDP_FLIP_NONE);
 	}
 	else
-#if defined(SWSCALE_FOUND)
-	{
-		int res;
-		struct SwsContext* resize;
-		int srcFormat = av_format_for_buffer(SrcFormat);
-		int dstFormat = av_format_for_buffer(DstFormat);
-		const int srcStep[1] = { (int)nSrcStep };
-		const int dstStep[1] = { (int)nDstStep };
-
-		if ((srcFormat == AV_PIX_FMT_NONE) || (dstFormat == AV_PIX_FMT_NONE))
-			return FALSE;
-
-		resize = sws_getContext((int)nSrcWidth, (int)nSrcHeight, srcFormat, (int)nDstWidth,
-		                        (int)nDstHeight, dstFormat, SWS_BILINEAR, NULL, NULL, NULL);
-
-		if (!resize)
-			goto fail;
-
-		res = sws_scale(resize, &src, srcStep, 0, (int)nSrcHeight, &dst, dstStep);
-		rc = (res == ((int)nDstHeight));
-	fail:
-		sws_freeContext(resize);
-	}
-
-#elif defined(CAIRO_FOUND)
 	{
 		const double sx = (double)nDstWidth / (double)nSrcWidth;
 		const double sy = (double)nDstHeight / (double)nSrcHeight;
@@ -851,10 +795,5 @@ BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT3
 		cairo_surface_destroy(csrc);
 		cairo_surface_destroy(cdst);
 	}
-#else
-	{
-		WLog_WARN(TAG, "SmartScaling requested but compiled without libcairo support!");
-	}
-#endif
 	return rc;
 }

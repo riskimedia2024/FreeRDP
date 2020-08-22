@@ -29,6 +29,23 @@
 #include <freerdp/gdi/gfx.h>
 #include <freerdp/gdi/region.h>
 
+#include <sys/timeb.h>
+
+/**
+ * Support Fps showing
+ */
+#include <sys/timeb.h>
+#if defined(WIN32)
+	#define SoraTimebStruct struct _timeb
+	#define SoraFTimeApi 	  _ftime
+#else
+	#define SoraTimebStruct struct timeb
+	#define SoraFTimeApi 	  ftime
+#endif
+
+#include <cairo/cairo.h>
+#include <freerdp/primitives.h>
+
 #define TAG FREERDP_TAG("gdi")
 
 static BOOL is_rect_valid(const RECTANGLE_16* rect, size_t width, size_t height)
@@ -122,6 +139,7 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	if (gdi->suppressOutput)
 		return CHANNEL_RC_OK;
 
+
 	surfaceX = surface->outputOriginX;
 	surfaceY = surface->outputOriginY;
 	surfaceRect.left = 0;
@@ -138,6 +156,8 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	if (!update_begin_paint(update))
 		goto fail;
 
+	if (gdi->gfx->highlightUpdatedRectArea)
+		GFXAuditPaintUpdated(surface->data, rects, nbRects, surface->width, surface->height);
 	for (i = 0; i < nbRects; i++)
 	{
 		const UINT32 nXSrc = rects[i].left;
@@ -162,6 +182,8 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	}
 
 	rc = CHANNEL_RC_OK;
+	if (gdi->gfx->showFpsOnScreen)
+			GFXAuditPaintScreen(gdi->gfx->audit, surface);
 fail:
 
 	if (!update_end_paint(update))
@@ -187,6 +209,8 @@ static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
 	for (index = 0; index < count; index++)
 	{
 		surface = (gdiGfxSurface*)context->GetSurfaceData(context, pSurfaceIds[index]);
+		if (index == 0 && context->audit)
+			GFXAuditAccept(context->audit, surface);
 
 		if (!surface)
 			continue;

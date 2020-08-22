@@ -26,6 +26,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <sys/timeb.h>
+
 #ifdef WITH_XCURSOR
 #include <X11/Xcursor/Xcursor.h>
 #endif

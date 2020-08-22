@@ -30,6 +30,8 @@
 #include <winpr/sysinfo.h>
 #include <winpr/environment.h>
 
+#include <sys/timeb.h>
+
 #include "wlog.h"
 
 #include "wlog/Layout.h"
@@ -73,6 +75,14 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 	GetLocalTime(&localTime);
 	index = 0;
 	p = (char*)layout->FormatString;
+
+	static struct timeb startTime;
+	static BOOL first = TRUE;
+	if (first)
+	{
+		ftime(&startTime);
+		first = FALSE;
+	}
 
 	while (*p)
 	{
@@ -221,6 +231,31 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 					format[index++] = '3';
 					format[index++] = 'u';
 					p++;
+				}
+				else if ((p[0] == 'r') && (p[1] == 't') && (p[2] == 's')) /* Runtime in seconds */
+				{
+					struct timeb tw;
+					ftime(&tw);
+					time_t dt = tw.time - startTime.time;
+					args[argc++] = (void *)(size_t) dt;
+					format[index++] = '%';
+					format[index++] = '5';
+					format[index++] = 'l';
+					format[index++] = 'u';
+					p += 2;
+				}
+				else if ((p[0] == 'r') && (p[1] == 't') && (p[2] == 'm')) /* Runtime in milliseconds */
+				{
+					struct timeb tw;
+					ftime(&tw);
+					double dtSecond = (tw.time - startTime.time) + (tw.millitm - startTime.millitm) / 1000.0;
+					time_t dt = (dtSecond - (time_t)dtSecond) * 1e6;
+					args[argc++] = (void *)(size_t) dt;
+					format[index++] = '%';
+					format[index++] = '0';
+					format[index++] = '6';
+					format[index++] = 'u';
+					p += 2;
 				}
 			}
 		}
@@ -386,7 +421,7 @@ wLogLayout* WLog_Layout_New(wLog* log)
 #ifdef ANDROID
 		layout->FormatString = _strdup("[pid=%pid:tid=%tid] - ");
 #else
-		layout->FormatString = _strdup("[%hr:%mi:%se:%ml] [%pid:%tid] [%lv][%mn] - ");
+		layout->FormatString = _strdup("[%rts.%rtm] [%lv] <%mn> ");
 #endif
 
 		if (!layout->FormatString)

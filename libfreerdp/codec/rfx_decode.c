@@ -37,6 +37,8 @@
 
 #include "rfx_decode.h"
 
+#include <sys/timeb.h>
+
 static void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
                                  const BYTE* data, int size, INT16* buffer)
 {
@@ -82,6 +84,7 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, RFX_TILE* tile, BYTE* rgb_buffer, int 
 	rfx_decode_component(context, cb_quants, tile->CbData, tile->CbLen, pSrcDst[1]); /* CbData */
 	rfx_decode_component(context, cr_quants, tile->CrData, tile->CrLen, pSrcDst[2]); /* CrData */
 	PROFILER_ENTER(context->priv->prof_rfx_ycbcr_to_rgb)
+
 
 	if (prims->yCbCrToRGB_16s8u_P3AC4R((const INT16**)pSrcDst, 64 * sizeof(INT16), rgb_buffer,
 	                                   stride, context->pixel_format,

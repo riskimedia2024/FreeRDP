@@ -159,12 +159,15 @@ static const COMMAND_LINE_ARGUMENT_A args[] = {
 #ifdef WITH_GFX_H264
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "[[RFX|AVC420|AVC444],mask:<value>]", NULL, NULL, -1,
 	  NULL, "RDP8 graphics pipeline" },
-	{ "gfx-h264", COMMAND_LINE_VALUE_OPTIONAL,
-	  "[[AVC420|AVC444],mask:<value>] [DEPRECATED] use /gfx:avc420 instead", NULL, NULL, -1, NULL,
-	  "RDP8.1 graphics pipeline using H264 codec" },
+	{ "gfx-updated-fragment", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+	  "SoraExtension<GFX::AVC444>: Highlight the updated rectangle area" },
+	{ "gfx-show-fps-console", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+	  "SoraExtension<GFX::AVC444>: Print real time FPS in standard output" },
+	{ "gfx-show-fps-screen", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+	  "SoraExtension<GFX::AVC444>: Render real time FPS on screen" },
 #else
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL, "RFX", NULL, NULL, -1, NULL, "RDP8 graphics pipeline" },
-#endif
+#endif /* WITH_GFX_H264 */
 	{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "RDP8 graphics pipeline using progressive codec" },
 	{ "gfx-small-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,

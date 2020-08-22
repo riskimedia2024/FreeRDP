@@ -19,6 +19,9 @@
  * limitations under the License.
  */
 
+#define _GNU_SOURCE
+#include <pthread.h>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -1349,6 +1352,8 @@ static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 	wMessage message;
 	UINT error = CHANNEL_RC_OK;
 	drdynvcPlugin* drdynvc = (drdynvcPlugin*)arg;
+
+	pthread_setname_np(pthread_self(), "Drdynvc VCH");
 
 	if (!drdynvc)
 	{

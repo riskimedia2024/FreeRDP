@@ -17,6 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define _GNU_SOURCE
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -32,6 +33,8 @@
 #include "../xf_client.h"
 #include "../xfreerdp.h"
 
+// #include <gperftools/profiler.h>
+
 int main(int argc, char* argv[])
 {
 	int status;
@@ -41,6 +44,8 @@ int main(int argc, char* argv[])
 	rdpContext* context;
 	rdpSettings* settings;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
+
+	// ProfilerStart("./xfreerdp_capture.prof");
 
 	ZeroMemory(&clientEntryPoints, sizeof(RDP_CLIENT_ENTRY_POINTS));
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);
@@ -77,6 +82,8 @@ int main(int argc, char* argv[])
 
 	WaitForSingleObject(thread, INFINITE);
 	GetExitCodeThread(thread, &dwExitCode);
+
+	// ProfilerStop();
 
 	freerdp_client_stop(context);
 

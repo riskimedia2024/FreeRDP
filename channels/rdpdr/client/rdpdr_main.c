@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+#define _GNU_SOURCE
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -66,6 +68,8 @@
 #include "irp.h"
 
 #include "rdpdr_main.h"
+
+#include <pthread.h>
 
 typedef struct _DEVICE_DRIVE_EXT DEVICE_DRIVE_EXT;
 /* IMPORTANT: Keep in sync with DRIVE_DEVICE */
@@ -1625,6 +1629,8 @@ static DWORD WINAPI rdpdr_virtual_channel_client_thread(LPVOID arg)
 	wMessage message;
 	rdpdrPlugin* rdpdr = (rdpdrPlugin*)arg;
 	UINT error;
+
+	pthread_setname_np(pthread_self(), "VCH Service");
 
 	if (!rdpdr)
 	{

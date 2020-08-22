@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#define _GNU_SOURCE
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -68,23 +70,7 @@ static void fatal_handler(int signum)
 	raise(signum);
 }
 
-const int fatal_signals[] = { SIGABRT,   SIGALRM, SIGBUS,  SIGFPE,  SIGHUP,  SIGILL,
-	                          SIGINT,    SIGKILL, SIGQUIT, SIGSEGV, SIGSTOP, SIGTERM,
-	                          SIGTSTP,   SIGTTIN, SIGTTOU, SIGUSR1, SIGUSR2,
-#ifdef SIGPOLL
-	                          SIGPOLL,
-#endif
-#ifdef SIGPROF
-	                          SIGPROF,
-#endif
-#ifdef SIGSYS
-	                          SIGSYS,
-#endif
-	                          SIGTRAP,
-#ifdef SIGVTALRM
-	                          SIGVTALRM,
-#endif
-	                          SIGXCPU,   SIGXFSZ };
+const int fatal_signals[] = { SIGABRT, SIGHUP, SIGINT, SIGKILL, SIGQUIT, SIGSEGV, SIGSTOP, SIGTERM };
 
 int freerdp_handle_signals(void)
 {
@@ -111,7 +97,6 @@ int freerdp_handle_signals(void)
 	}
 
 	pthread_sigmask(SIG_SETMASK, &orig_set, NULL);
-	/* Ignore SIGPIPE signal. */
 	signal(SIGPIPE, SIG_IGN);
 	return 0;
 }

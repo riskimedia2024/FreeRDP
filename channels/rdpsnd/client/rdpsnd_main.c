@@ -22,6 +22,7 @@
  * limitations under the License.
  */
 
+#define _GNU_SOURCE
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -49,6 +50,8 @@
 
 #include "rdpsnd_common.h"
 #include "rdpsnd_main.h"
+
+#include <pthread.h>
 
 struct _RDPSND_CHANNEL_CALLBACK
 {
@@ -1238,6 +1241,8 @@ static DWORD WINAPI play_thread(LPVOID arg)
 {
 	UINT error = CHANNEL_RC_OK;
 	rdpsndPlugin* rdpsnd = arg;
+
+	pthread_setname_np(pthread_self(), "Sound Service");
 
 	if (!rdpsnd || !rdpsnd->queue)
 		return ERROR_INVALID_PARAMETER;

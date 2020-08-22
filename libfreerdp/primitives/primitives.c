@@ -216,15 +216,15 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 
 	struct prim_benchmark testcases[] =
 	{
-		{ "generic", NULL, PRIMITIVES_PURE_SOFT, 0 },
+		{ "CPU::Generic", NULL, PRIMITIVES_PURE_SOFT, 0 },
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
-		{ "optimized", NULL, PRIMITIVES_ONLY_CPU, 0 },
+		{ "CPU::SIMD", NULL, PRIMITIVES_ONLY_CPU, 0 },
 #endif
 #if defined(WITH_OPENCL)
-		{ "opencl", NULL, PRIMITIVES_ONLY_GPU, 0 },
+		{ "GPU::OpenCL", NULL, PRIMITIVES_ONLY_GPU, 0 },
 #endif
 	};
-	const struct prim_benchmark* best = NULL;
+	struct prim_benchmark* best = NULL;
 
 	primitives_YUV_benchmark bench;
 	primitives_YUV_benchmark* yuvBench = primitives_YUV_benchmark_init(&bench);
@@ -251,7 +251,8 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 		if (!best || (best->count < cur->count))
 			best = cur;
 	}
-
+	// best = &testcases[2];
+	// best->prims = primitives_get_by_type(testcases[2].flags);
 	if (!best)
 	{
 		WLog_ERR(TAG, "No primitives to test, aborting.");
@@ -260,7 +261,7 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 	/* finally compute the results */
 	*prims = *best->prims;
 
-	WLog_INFO(TAG, "primitives autodetect, using %s", best->name);
+	WLog_INFO(TAG, "Primitives autodetect: %s", best->name);
 	ret = TRUE;
 out:
 	if (!ret)

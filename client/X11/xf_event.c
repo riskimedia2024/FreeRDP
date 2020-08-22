@@ -37,6 +37,8 @@
 #include "xf_event.h"
 #include "xf_input.h"
 
+#include <sys/timeb.h>
+
 #define TAG CLIENT_TAG("x11")
 
 #define CLAMP_COORDINATES(x, y) \
@@ -503,14 +505,14 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 		              CurrentTime);
 	}
 
+	/* Disabled active or deactive the window when focusIn/Out */
 	if (app)
 	{
 		xfAppWindow* appWindow;
 		xf_rail_send_activate(xfc, event->window, TRUE);
 		appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
-		/* Update the server with any window changes that occurred while the window was not focused.
-		 */
+		// Update the server with any window changes that occurred while the window was not focused.
 		if (appWindow)
 		{
 			xf_rail_adjust_position(xfc, appWindow);
@@ -645,7 +647,7 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 		if (xfc->window->top != event->y)
 			xfc->window->top = event->y;
 
-		if (xfc->window->width != event->width || xfc->window->height != event->height)
+		if ((xfc->window->width != event->width || xfc->window->height != event->height))
 		{
 			xfc->window->width = event->width;
 			xfc->window->height = event->height;

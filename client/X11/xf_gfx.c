@@ -29,6 +29,8 @@
 
 #include <X11/Xutil.h>
 
+#include <sys/timeb.h>
+
 #define TAG CLIENT_TAG("x11")
 
 static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)

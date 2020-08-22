@@ -414,6 +414,7 @@ INT32 avc444_decompress(H264_CONTEXT* h264, BYTE op, RECTANGLE_16* regionRects,
 	if (!h264 || !regionRects || !pSrcData || !pDstData)
 		return -1001;
 
+	// printf("Decompress: pDstData = %p\n", pDstData);
 	switch (op)
 	{
 		case 0: /* YUV420 in stream 1

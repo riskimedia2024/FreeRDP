@@ -22,7 +22,9 @@
 #include "config.h"
 #endif
 
+#define _GNU_SOURCE
 #include <assert.h>
+#include <dlfcn.h>
 
 #include <winpr/handle.h>
 

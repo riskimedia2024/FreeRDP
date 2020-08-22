@@ -44,7 +44,6 @@
 
 #include "rdp.h"
 #include "client.h"
-#include "server.h"
 #include "channels.h"
 
 #define TAG FREERDP_TAG("core.channels")
@@ -219,82 +218,4 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 			return FALSE;
 	}
 	return Stream_SafeSeek(s, chunkLength);
-}
-
-static const WtsApiFunctionTable FreeRDP_WtsApiFunctionTable = {
-	0, /* dwVersion */
-	0, /* dwFlags */
-
-	FreeRDP_WTSStopRemoteControlSession,        /* StopRemoteControlSession */
-	FreeRDP_WTSStartRemoteControlSessionW,      /* StartRemoteControlSessionW */
-	FreeRDP_WTSStartRemoteControlSessionA,      /* StartRemoteControlSessionA */
-	FreeRDP_WTSConnectSessionW,                 /* ConnectSessionW */
-	FreeRDP_WTSConnectSessionA,                 /* ConnectSessionA */
-	FreeRDP_WTSEnumerateServersW,               /* EnumerateServersW */
-	FreeRDP_WTSEnumerateServersA,               /* EnumerateServersA */
-	FreeRDP_WTSOpenServerW,                     /* OpenServerW */
-	FreeRDP_WTSOpenServerA,                     /* OpenServerA */
-	FreeRDP_WTSOpenServerExW,                   /* OpenServerExW */
-	FreeRDP_WTSOpenServerExA,                   /* OpenServerExA */
-	FreeRDP_WTSCloseServer,                     /* CloseServer */
-	FreeRDP_WTSEnumerateSessionsW,              /* EnumerateSessionsW */
-	FreeRDP_WTSEnumerateSessionsA,              /* EnumerateSessionsA */
-	FreeRDP_WTSEnumerateSessionsExW,            /* EnumerateSessionsExW */
-	FreeRDP_WTSEnumerateSessionsExA,            /* EnumerateSessionsExA */
-	FreeRDP_WTSEnumerateProcessesW,             /* EnumerateProcessesW */
-	FreeRDP_WTSEnumerateProcessesA,             /* EnumerateProcessesA */
-	FreeRDP_WTSTerminateProcess,                /* TerminateProcess */
-	FreeRDP_WTSQuerySessionInformationW,        /* QuerySessionInformationW */
-	FreeRDP_WTSQuerySessionInformationA,        /* QuerySessionInformationA */
-	FreeRDP_WTSQueryUserConfigW,                /* QueryUserConfigW */
-	FreeRDP_WTSQueryUserConfigA,                /* QueryUserConfigA */
-	FreeRDP_WTSSetUserConfigW,                  /* SetUserConfigW */
-	FreeRDP_WTSSetUserConfigA,                  /* SetUserConfigA */
-	FreeRDP_WTSSendMessageW,                    /* SendMessageW */
-	FreeRDP_WTSSendMessageA,                    /* SendMessageA */
-	FreeRDP_WTSDisconnectSession,               /* DisconnectSession */
-	FreeRDP_WTSLogoffSession,                   /* LogoffSession */
-	FreeRDP_WTSShutdownSystem,                  /* ShutdownSystem */
-	FreeRDP_WTSWaitSystemEvent,                 /* WaitSystemEvent */
-	FreeRDP_WTSVirtualChannelOpen,              /* VirtualChannelOpen */
-	FreeRDP_WTSVirtualChannelOpenEx,            /* VirtualChannelOpenEx */
-	FreeRDP_WTSVirtualChannelClose,             /* VirtualChannelClose */
-	FreeRDP_WTSVirtualChannelRead,              /* VirtualChannelRead */
-	FreeRDP_WTSVirtualChannelWrite,             /* VirtualChannelWrite */
-	FreeRDP_WTSVirtualChannelPurgeInput,        /* VirtualChannelPurgeInput */
-	FreeRDP_WTSVirtualChannelPurgeOutput,       /* VirtualChannelPurgeOutput */
-	FreeRDP_WTSVirtualChannelQuery,             /* VirtualChannelQuery */
-	FreeRDP_WTSFreeMemory,                      /* FreeMemory */
-	FreeRDP_WTSRegisterSessionNotification,     /* RegisterSessionNotification */
-	FreeRDP_WTSUnRegisterSessionNotification,   /* UnRegisterSessionNotification */
-	FreeRDP_WTSRegisterSessionNotificationEx,   /* RegisterSessionNotificationEx */
-	FreeRDP_WTSUnRegisterSessionNotificationEx, /* UnRegisterSessionNotificationEx */
-	FreeRDP_WTSQueryUserToken,                  /* QueryUserToken */
-	FreeRDP_WTSFreeMemoryExW,                   /* FreeMemoryExW */
-	FreeRDP_WTSFreeMemoryExA,                   /* FreeMemoryExA */
-	FreeRDP_WTSEnumerateProcessesExW,           /* EnumerateProcessesExW */
-	FreeRDP_WTSEnumerateProcessesExA,           /* EnumerateProcessesExA */
-	FreeRDP_WTSEnumerateListenersW,             /* EnumerateListenersW */
-	FreeRDP_WTSEnumerateListenersA,             /* EnumerateListenersA */
-	FreeRDP_WTSQueryListenerConfigW,            /* QueryListenerConfigW */
-	FreeRDP_WTSQueryListenerConfigA,            /* QueryListenerConfigA */
-	FreeRDP_WTSCreateListenerW,                 /* CreateListenerW */
-	FreeRDP_WTSCreateListenerA,                 /* CreateListenerA */
-	FreeRDP_WTSSetListenerSecurityW,            /* SetListenerSecurityW */
-	FreeRDP_WTSSetListenerSecurityA,            /* SetListenerSecurityA */
-	FreeRDP_WTSGetListenerSecurityW,            /* GetListenerSecurityW */
-	FreeRDP_WTSGetListenerSecurityA,            /* GetListenerSecurityA */
-	FreeRDP_WTSEnableChildSessions,             /* EnableChildSessions */
-	FreeRDP_WTSIsChildSessionsEnabled,          /* IsChildSessionsEnabled */
-	FreeRDP_WTSGetChildSessionId,               /* GetChildSessionId */
-	FreeRDP_WTSGetActiveConsoleSessionId,       /* GetActiveConsoleSessionId */
-	FreeRDP_WTSLogonUser,
-	FreeRDP_WTSLogoffUser,
-	FreeRDP_WTSStartRemoteControlSessionExW,
-	FreeRDP_WTSStartRemoteControlSessionExA
-};
-
-PWtsApiFunctionTable FreeRDP_InitWtsApi(void)
-{
-	return (PWtsApiFunctionTable)&FreeRDP_WtsApiFunctionTable;
 }

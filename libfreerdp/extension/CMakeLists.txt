@@ -1,0 +1,9 @@
+set(MODULE_NAME "freerdp-extension")
+set(MODULE_PREFIX "FREERDP_EXTENSION")
+
+set(${MODULE_PREFIX}_SRCS
+    RDPGFXAudit.c)
+
+set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_GATEWAY_SRCS})
+
+freerdp_module_add(${${MODULE_PREFIX}_SRCS})

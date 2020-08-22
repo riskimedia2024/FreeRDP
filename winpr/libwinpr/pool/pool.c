@@ -17,6 +17,9 @@
  * limitations under the License.
  */
 
+#define _GNU_SOURCE
+#include <pthread.h>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -68,6 +71,8 @@ static DWORD WINAPI thread_pool_work_func(LPVOID arg)
 	PTP_CALLBACK_INSTANCE callbackInstance;
 
 	pool = (PTP_POOL)arg;
+
+	pthread_setname_np(pthread_self(), "Worker");
 
 	events[0] = pool->TerminateEvent;
 	events[1] = Queue_Event(pool->PendingQueue);

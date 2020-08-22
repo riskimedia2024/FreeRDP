@@ -24,6 +24,8 @@
 #include "ConsoleAppender.h"
 #include "Message.h"
 
+#include "../extension/ConsoleShader.h"
+
 #ifdef ANDROID
 #include <android/log.h>
 #endif
@@ -137,7 +139,10 @@ static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
 	}
 
 	if (message->Level != WLOG_OFF)
-		fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
+	{
+		// fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
+		CsShaderTransport(fp, message->PrefixString, message->TextString);
+	}
 #endif
 	return TRUE;
 }

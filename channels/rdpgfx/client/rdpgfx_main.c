@@ -813,6 +813,9 @@ static UINT rdpgfx_recv_start_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStre
 	             pdu.frameId, pdu.timestamp);
 	gfx->StartDecodingTime = GetTickCount64();
 
+	if (context->audit)
+		GFXAuditFrameStartTimer(context->audit);
+
 	if (context)
 	{
 		IFCALLRET(context->StartFrame, error, context, &pdu);
@@ -847,6 +850,9 @@ static UINT rdpgfx_recv_end_frame_pdu(RDPGFX_CHANNEL_CALLBACK* callback, wStream
 
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
 	DEBUG_RDPGFX(gfx->log, "RecvEndFramePdu: frameId: %" PRIu32 "", pdu.frameId);
+
+	if (context->audit)
+		GFXAuditFrameStopTimer(context->audit);
 
 	if (context)
 	{
@@ -999,8 +1005,19 @@ static UINT rdpgfx_recv_wire_to_surface_1_pdu(RDPGFX_CHANNEL_CALLBACK* callback,
 	cmd.data = pdu.bitmapData;
 	cmd.extra = NULL;
 
+	/* If available, we should calculate time on decoding */
+	RdpgfxClientContext* context = (RdpgfxClientContext*)gfx->iface.pInterface;
+	if (context->audit)
+	{
+		GFXAuditSetDecoderName(context->audit, rdpgfx_get_codec_id_string(pdu.codecId));
+		GFXAuditDecodeStartTimer(context->audit);
+	}
+
 	if ((error = rdpgfx_decode(gfx, &cmd)))
 		WLog_Print(gfx->log, WLOG_ERROR, "rdpgfx_decode failed with error %" PRIu32 "!", error);
+
+	if (context->audit)
+		GFXAuditDecodeStopTimer(context->audit);
 
 	return error;
 }
@@ -2103,6 +2120,15 @@ RdpgfxClientContext* rdpgfx_client_context_new(rdpSettings* settings)
 	context->CacheImportOffer = rdpgfx_send_cache_import_offer_pdu;
 	context->QoeFrameAcknowledge = rdpgfx_send_qoe_frame_acknowledge_pdu;
 
+#ifdef WITH_GFX_H264
+	context->highlightUpdatedRectArea = settings->GfxFeatures.highlightUpdatedArea;
+	context->showFpsOnConsole = settings->GfxFeatures.showFpsOnConsole;
+	context->showFpsOnScreen = settings->GfxFeatures.showFpsOnScreen;
+	if (context->showFpsOnScreen || context->showFpsOnConsole)
+		context->audit = GFXAuditNewContext(context);
+	else
+		context->audit = NULL;
+#endif /* WITH_GFX_H264 */
 	gfx->iface.pInterface = (void*)context;
 	gfx->zgfx = zgfx_context_new(FALSE);
 
@@ -2141,6 +2167,11 @@ void rdpgfx_client_context_free(RdpgfxClientContext* context)
 		zgfx_context_free(gfx->zgfx);
 		gfx->zgfx = NULL;
 	}
+
+#ifdef WITH_GFX_H264
+	if (context->audit)
+		GFXAuditReleaseContext(context->audit);
+#endif /* WITH_GFX_H264 */
 
 	HashTable_Free(gfx->SurfaceTable);
 	free(context);

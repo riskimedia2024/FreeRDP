@@ -49,7 +49,7 @@ struct rdp_codecs
 
 	RFX_CONTEXT* rfx;
 	NSC_CONTEXT* nsc;
-	H264_CONTEXT* h264;
+	// H264_CONTEXT* h264;
 	CLEAR_CONTEXT* clear;
 	PROGRESSIVE_CONTEXT* progressive;
 	BITMAP_PLANAR_CONTEXT* planar;

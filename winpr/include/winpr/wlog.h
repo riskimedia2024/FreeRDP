@@ -130,7 +130,7 @@ extern "C"
 	{                                                         \
 		static wLog* _log_cached_ptr = NULL;                  \
 		if (!_log_cached_ptr)                                 \
-			_log_cached_ptr = WLog_Get(_tag);                 \
+			_log_cached_ptr = WLog_Get(_tag); 				  \
 		WLog_Print(_log_cached_ptr, _log_level, __VA_ARGS__); \
 	} while (0)
 

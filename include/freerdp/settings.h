@@ -1559,6 +1559,16 @@ struct rdp_settings
 	                                   default value - currently UNUSED! */
 	ALIGN64 char* ActionScript;
 	ALIGN64 DWORD Floatbar;
+
+	/**
+	 * Sora: Extend features.
+	*/
+	struct
+	{
+		ALIGN64 BOOL highlightUpdatedArea;
+		ALIGN64 BOOL showFpsOnConsole;
+		ALIGN64 BOOL showFpsOnScreen;
+	} ALIGN64 GfxFeatures;
 };
 typedef struct rdp_settings rdpSettings;
 

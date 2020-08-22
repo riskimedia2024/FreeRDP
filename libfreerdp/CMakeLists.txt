@@ -82,25 +82,9 @@ macro (freerdp_definition_add)
          set (LIBFREERDP_DEFINITIONS ${LIBFREERDP_DEFINITIONS} PARENT_SCOPE)
 endmacro()
 
-if (WITH_SWSCALE)
-    find_package(SWScale REQUIRED)
-endif(WITH_SWSCALE)
-if (WITH_CAIRO)
-    find_package(Cairo REQUIRED)
-endif(WITH_CAIRO)
-
-# Prefer SWScale over Cairo, both at the same time are not possible.
-if (WITH_SWSCALE)
-    add_definitions(-DSWSCALE_FOUND=1)
-    include_directories(${SWScale_INCLUDE_DIR})
-    freerdp_library_add(${SWScale_LIBRARY})
-elseif (WITH_CAIRO)
-    add_definitions(-DCAIRO_FOUND=1)
-    include_directories(${CAIRO_INCLUDE_DIR})
-    freerdp_library_add(${CAIRO_LIBRARY})
-else()
-    message(WARNING "-DWITH_SWSCALE=OFF and -DWITH_CAIRO=OFF, compiling without image scaling support!")
-endif()
+find_package(Cairo REQUIRED)
+include_directories(${CAIRO_INCLUDE_DIR})
+freerdp_library_add(${CAIRO_LIBRARY})
 
 set(${MODULE_PREFIX}_SUBMODULES
     utils
@@ -109,6 +93,7 @@ set(${MODULE_PREFIX}_SUBMODULES
     cache
     crypto
     locale
+    extension
     core)
 
 foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
@@ -251,6 +236,14 @@ if(BUILD_TESTING)
 endif()
 
 # /codec
+
+# extensions
+
+set(EXTENSION_SRCS
+    extension/RDPGFXAudit.c)
+freerdp_module_add(${EXTENSION_SRCS})
+
+# /extensions
 
 # primitives
 
