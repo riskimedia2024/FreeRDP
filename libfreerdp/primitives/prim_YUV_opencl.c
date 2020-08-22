@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <Buildtime.h>
+
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
 #include <unistd.h>
@@ -188,28 +190,6 @@ static pstatus_t primitives_uninit_opencl(void)
 	return PRIMITIVES_SUCCESS;
 }
 
-static char *load_opencl_program(char const *file)
-{
-	int fd = open(file, O_RDONLY);
-	if (fd < 0)
-		return NULL;
-	
-	struct stat stbuf;
-	fstat(fd, &stbuf);
-	char *ptr = (char *) malloc(stbuf.st_size + 1);
-	memset(ptr, '\0', stbuf.st_size + 1);
-	
-	if (read(fd, ptr, stbuf.st_size) < 0)
-	{
-		close(fd);
-		free(ptr);
-		return NULL;
-	}
-
-	close(fd);
-	return ptr;
-}
-
 static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 {
 	cl_platform_id* platform_ids = NULL;
@@ -294,8 +274,7 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 		return FALSE;
 	}
 
-	char *openclProgram = load_opencl_program("/home/sora/Repositories/Hacking/FreeRDP/libfreerdp/primitives/primitives.cl");
-
+	char const *openclProgram = USE_FILE_INTEGRATION_SYMBOL(OpenCLPrimitivesKernel);
 	programLen = strlen(openclProgram);
 	cl->program =
 	    clCreateProgramWithSource(cl->context, 1, (const char**)&openclProgram, &programLen, &ret);

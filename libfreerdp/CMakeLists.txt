@@ -86,6 +86,11 @@ find_package(Cairo REQUIRED)
 include_directories(${CAIRO_INCLUDE_DIR})
 freerdp_library_add(${CAIRO_LIBRARY})
 
+## Generate OpenCL primitives kernel
+freerdp_include_directory_add(${CMAKE_HOME_DIRECTORY}/resources/generated)
+execute_process(COMMAND ${CMAKE_HOME_DIRECTORY}/scripts/FileResourceIntegration.sh
+    WORKING_DIRECTORY ${CMAKE_HOME_DIRECTORY})
+
 set(${MODULE_PREFIX}_SUBMODULES
     utils
     common
@@ -93,7 +98,6 @@ set(${MODULE_PREFIX}_SUBMODULES
     cache
     crypto
     locale
-    extension
     core)
 
 foreach(${MODULE_PREFIX}_SUBMODULE ${${MODULE_PREFIX}_SUBMODULES})
@@ -240,7 +244,8 @@ endif()
 # extensions
 
 set(EXTENSION_SRCS
-    extension/RDPGFXAudit.c)
+    extension/RDPGFXAudit.c
+    ${CMAKE_HOME_DIRECTORY}/resources/generated/dynamic_buildtime_fri.c)
 freerdp_module_add(${EXTENSION_SRCS})
 
 # /extensions
@@ -287,9 +292,8 @@ endif()
 
 if (WITH_OPENCL)
     set(PRIMITIVES_OPENCL_SRCS primitives/prim_YUV_opencl.c)
-
-        freerdp_include_directory_add(${OpenCL_INCLUDE_DIRS})
-        freerdp_library_add(OpenCL::OpenCL)
+    freerdp_include_directory_add(${OpenCL_INCLUDE_DIRS})
+    freerdp_library_add(OpenCL::OpenCL)
 
 endif()
 

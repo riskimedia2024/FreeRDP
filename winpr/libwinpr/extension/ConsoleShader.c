@@ -306,12 +306,6 @@ _Bool __cshader_is_llegal_identifier(char const *begin, char const *end)
 _Bool __cshader_check_modulename(CatchBlock *cb)
 {
     /* A module name is like: org.sora.xxx */
-    enum
-    {
-        Point,
-        Identifier
-    } expect;
-
     char const *p = cb->begin;
     char const *pIdBegin = cb->begin + 1, *pIdEnd;
     while (p <= cb->end)
